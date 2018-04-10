@@ -1,55 +1,64 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
+const styles = {
+	title: {
+		fontSize: "25px"
+	},
+	text: {
+		fontSize: "16px"
+	},
+	card: {
+		display: "inline-block",
+		img: {
+			height: "150px"
+		}
+	}
+};
 
 		let cards = [
 			{
 				key: 1,
-				number: 0.234,
-				image: "squirrel.jpg",
-				clicked: false
+				image: "squirrel.jpg"
 			}, {
 				key: 2,
-				number: 0.546,
-				image: "racoon.jpg",
-				clicked: false
+				image: "racoon.jpg"
 			}, {
 				key: 3,
-				number: 0.978,
-				image: "skunk.jpg",
-				clicked: false
+				image: "skunk.jpg"
 			}, {
 				key: 4,
-				number: 0.788,
-				image: "possum.jpg",
-				clicked: false
+				image: "possum.jpg"
 			}, {
 				key: 5,
-				number: 0.045,
-				image: "fox.jpg",
-				clicked: false
+				image: "fox.jpg"
 			}, {
 				key: 6,
-				number: 0.472,
-				image: "rabbit.jpg",
-				clicked: false
+				image: "rabbit.jpg"
+			}, {
+				key: 7,
+				image: "deer.jpg"
+			}, {
+				key: 8,
+				image: "groundhog.jpg"
+			}, {
+				key: 9,
+				image: "duck.jpg"
+			}, {
+				key: 10,
+				image: "mouse.jpg"
 			}
 		];
 
-		let data = {
-			status: "WOOOO!",
-			score: 23,
-			topScore: 339
-		};
 
 class App extends React.Component {
 
 	state = {
-		status: "WOOOO!",
-		score: 23,
-		topScore: 339,
-		order: [0, 1, 2, 3, 4, 5],
-		clicked: [false, false, false, false, false, false]
+		status: "Welcome to my game. Click on every animal once to win.",
+		score: 0,
+		topScore: 0,
+		order: this.props.cards.map(card => card.key),
+		reset: false
 	};
 
 	shuffler = sequenceArray => {
@@ -57,7 +66,7 @@ class App extends React.Component {
 		let newSequence = [];
 
 		for (let i = 0; i < sequenceArray.length; i++) {
-			arr[i] = {original: i, new: Math.random()};
+			arr[i] = {original: i + 1, new: Math.random()};
 		}
 
 		arr.sort( (a, b) => a.new - b.new );
@@ -75,7 +84,7 @@ class App extends React.Component {
 
 		for (let i = 0; i < sequenceArray.length; i++) {
 			let index = sequenceArray[i];
-			sendArray[i] = objectArray[index];
+			sendArray[i] = objectArray[index - 1];
 		}
 
 		return sendArray;
@@ -87,26 +96,48 @@ class App extends React.Component {
 		if (b) {
 			this.setState({
 				status: "you lost",
-				score: 0
+				score: 0,
+				reset: true
 			});
 		} else {
-			this.setState({score: this.state.score + 1});
-		}
-		
+			this.setState({
+				score: this.state.score + 1,
+				status: "Keep clicking - there are animals remaining"
+			});
 
-		// if (this.state.clicked[info - 1] == false) {
-		// 	this.setState({clicked[1]: true});
-		// 	this.setState({score: 6})
-		// }
+		}
+
 		console.log(a + " " + b);
 		console.log(this.state);
 		this.setState({order: this.shuffler(this.state.order)});
 	}
 
+	componentDidUpdate() {
+		console.log(this.props.cards);
+		if (this.state.score > this.state.topScore) {
+			this.setState({topScore: this.state.score});
+		}
+		if (this.state.score == this.props.cards.length && this.state.status != "You won!") {
+			this.setState({
+				reset: true,
+				score: 0,
+				status: "You won!"
+			});
+		}
+	}
+
+	resetter = (boolean) => {
+		if (boolean) {
+			this.setState({
+				reset: false
+			});
+		}
+	}
+
 	render() {
-		console.log(this.props.data);
-		
 		let sendArray = this.sorter(this.props.cards, this.state.order);
+		console.log(this.state.order)
+		console.log(this.state.reset)
 		return (
 			<div>
 				<StatusBar 
@@ -115,7 +146,9 @@ class App extends React.Component {
 				topScore={this.state.topScore} />
 				<DisplayPanel
 				cards={sendArray} 
-				onClick={this.handleOnClick} />
+				onClick={this.handleOnClick}
+				reset={this.state.reset} 
+				resetter={this.resetter} />
 			</div>
 		);
 	}
@@ -127,12 +160,15 @@ class DisplayPanel extends React.Component {
 	};
 
 	render() {
+		console.log(this.props.cards)
 		return (
 			<div>
 				{this.props.cards.map( card => (<Card 
 					key={card.key} 
 					data={card} 
 					onClick={this.handleOnClick} 
+					reset={this.props.reset} 
+					resetter={this.props.resetter}
 					/>) 
 				)}
 			</div>
@@ -146,23 +182,37 @@ class Card extends React.Component {
 	};
 
 	handleOnClick = () => {
+
 		if (this.state.clicked == false) {
 			this.props.onClick(this.props.data.key, false);
+			this.setState({clicked: true});
 		} else if (this.state.clicked == true) {
 			this.props.onClick(this.props.data.key, true);
 		}
-		this.setState({clicked: true});
+	
+	}
+
+
+	componentDidUpdate() {
+		if (this.props.reset == true && this.state.clicked == true) {
+			this.setState({clicked: false});
+		} else if (this.props.reset == true && this.state.clicked == false) {
+			this.props.resetter(true);
+
+		}
+		console.log(this.props.reset)
 	}
 
 	render() {
+
+
 		return (
-			<div>
+			<div className="card" style={styles.card}>
 				<img key={this.props.data.key} 
 				id={this.props.data.key} 
 				src={this.props.data.image} 
-				onClick={this.handleOnClick} 
-				height="150" 
-				width="150" 
+				onClick={this.handleOnClick}  
+				style={styles.card.img} 
 				alt="" />
 			</div>
 		);
@@ -173,16 +223,16 @@ class StatusBar extends React.Component {
 	render() {
 		return (
 			<div>
-				<p>Clicky Game</p>
-				<p>{this.props.status}</p>
-				<p>Score: {this.props.score}</p>
-				<p>| Top Score: {this.props.topScore}</p>
+				<p style={styles.title}>Clicky Game</p>
+				<p style={styles.text}>{this.props.status}</p>
+				<p style={styles.text}>Score: {this.props.score}</p>
+				<p style={styles.text}>Top Score: {this.props.topScore}</p>
 			</div>
 		);
 	}
 }
 
 ReactDOM.render(
-	<App cards={cards} data={data} />,
+	<App cards={cards} />,
 	document.getElementById('root')
 );
